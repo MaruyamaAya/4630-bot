@@ -77,7 +77,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     else:
         result_set = inner_level_q(float(argv[0]), float(argv[1]))
     if len(result_set) > 50:
-        await inner_level.finish(f"结果过多（{len(result_set)} 条），请缩小搜索范围。")
+        await inner_level.finish(f"彩彩找到的结果太多了呢...（{len(result_set)} 条），请缩小搜索范围~")
         return
     s = ""
     for elem in result_set:
@@ -106,7 +106,7 @@ async def _(bot: Bot, event: Event, state: T_State):
         else:
             music_data = total_list.filter(level=level, diff=['绿黄红紫白'.index(res.groups()[1])], type=tp)
         if len(music_data) == 0:
-            rand_result = "没有这样的乐曲哦。"
+            rand_result = "彩彩没有找到没有这样的乐曲哦。"
         else:
             rand_result = song_txt(music_data.random())
         await spec_rand.send(rand_result)
@@ -258,7 +258,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             s += f'宜 {wm_list[i]}\n'
         elif wm_value[i] == 0:
             s += f'忌 {wm_list[i]}\n'
-    s += "彩彩提醒您：打机时不要大力拍打或滑动哦\n今日推荐歌曲："
+    s += "Pastel*Palettes的应援就拜托大家了哦~\n彩彩今天为你推荐这首歌！"
     music = total_list[h % len(total_list)]
     await jrwm.finish(Message([
         {"type": "text", "data": {"text": s}}
@@ -289,10 +289,10 @@ async def _(bot: Bot, event: Event, state: T_State):
     result_set = music_aliases[name]
     if len(result_set) == 1:
         music = total_list.by_title(result_set[0])
-        await find_song.finish(Message([{"type": "text", "data": {"text": "您要找的是不是"}}] + song_txt(music)))
+        await find_song.finish(Message([{"type": "text", "data": {"text": "彩彩为你找到了"}}] + song_txt(music)))
     else:
         s = '\n'.join(result_set)
-        await find_song.finish(f"您要找的可能是以下歌曲中的其中一首：\n{ s }")
+        await find_song.finish(f"彩彩觉得可能是以下歌曲中的其中一首：\n{ s }")
 
 
 query_score = on_command('分数线')
