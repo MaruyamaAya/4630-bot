@@ -122,7 +122,7 @@ mr = on_regex(r".*maimai.*什么")
 async def _(bot: Bot, event: Event, state: T_State):
     await mr.finish(song_txt(total_list.random()))
 
-test_4630 = on_regex(r"4630")
+test_4630 = on_command("4630", aliases={'wht'})
 @test_4630.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     await test_4630.finish(img_4630_text())

@@ -10,9 +10,14 @@ from nonebot.message import event_preprocessor
 from src.libraries.image import *
 from src.libraries.bilibili_search import *
 from random import randint
+import requests
 from pixivpy3 import *
 from bilibili_api import sync
 import os
+from src.libraries.Thursday import *
+
+
+
 
 aapi = AppPixivAPI()
 
@@ -34,6 +39,19 @@ async def preprocessor(bot, event, state):
     if hasattr(event, 'message_type') and event.message_type == "private" and event.sub_type != "friend":
         raise IgnoredException("not reply group temp message")
 
+thur = on_command("疯狂星期四")
+@thur.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    res__ = return_thur()
+    await thur.finish(res__)
+
+dog = on_command("舔狗日记")
+@dog.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    url_ = 'https://cloud.qqshabi.cn/api/tiangou/api.php'
+    response = requests.get(url_,).text
+    response = response.replace('你', '彩彩')
+    await dog.finish(response)
 
 self_search = on_command("彩彩自搜")
 @self_search.handle()
@@ -84,6 +102,8 @@ help = on_command('help')
 @help.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     help_str = '''可用命令如下：
+[那个数字] 随机迫害wht
+彩彩自搜 慌不择路的自我检索者
 今日舞萌 查看今天的舞萌运势
 XXXmaimaiXXX什么 随机一首歌
 随个[dx/标准][绿黄红紫白]<难度> 随机一首指定条件的乐曲
