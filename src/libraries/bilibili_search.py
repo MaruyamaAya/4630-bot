@@ -3,8 +3,9 @@ from bilibili_api.utils.network import request
 from enum import Enum
 import asyncio
 import json
+import os
 
-API = open("search.json", "r")
+API = open(os.path.join(os.path.dirname(__file__), 'search.json'), "r")
 API = json.loads(API.read())
 
 class SearchObjectType(Enum):
