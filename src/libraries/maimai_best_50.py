@@ -5,7 +5,7 @@ from typing import Optional, Dict, List, Tuple
 
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-from src.libraries.maimaidx_music import total_list
+from src.libraries.maimaidx_music import total_list, get_cover_len4_id
 
 
 scoreRank = 'D C B BB BBB A AA AAA S S+ SS SS+ SSS SSS+'.split(' ')
@@ -207,14 +207,14 @@ class DrawBest(object):
             i = num // 7
             j = num % 7
             chartInfo = sdBest[num]
-            pngPath = self.cover_dir + f'{chartInfo.idNum}.jpg'
+            pngPath = self.cover_dir + f'{get_cover_len4_id(chartInfo.idNum)}.png'
             if not os.path.exists(pngPath):
                 pngPath = self.cover_dir + '1000.png'
             temp = Image.open(pngPath).convert('RGB')
             temp = self._resizePic(temp, itemW / temp.size[0])
             temp = temp.crop((0, (temp.size[1] - itemH) / 2, itemW, (temp.size[1] + itemH) / 2))
             temp = temp.filter(ImageFilter.GaussianBlur(3))
-            temp = temp.point(lambda p: p * 0.72)
+            temp = temp.point(lambda p: int(p * 0.72))
 
             tempDraw = ImageDraw.Draw(temp)
             tempDraw.polygon(levelTriagle, Color[chartInfo.diff])
@@ -239,7 +239,7 @@ class DrawBest(object):
             tempDraw.text((8, 60), f'#{num + 1}', 'white', font)
 
             recBase = Image.new('RGBA', (itemW, itemH), 'black')
-            recBase = recBase.point(lambda p: p * 0.8)
+            recBase = recBase.point(lambda p: int(p * 0.8))
             img.paste(recBase, (self.COLOUMS_IMG[j] + 5, self.ROWS_IMG[i + 1] + 5))
             img.paste(temp, (self.COLOUMS_IMG[j] + 4, self.ROWS_IMG[i + 1] + 4))
         for num in range(len(sdBest), sdBest.size):
@@ -254,16 +254,14 @@ class DrawBest(object):
             i = num // 3
             j = num % 3
             chartInfo = dxBest[num]
-            pngPath = self.cover_dir + f'{int(chartInfo.idNum)}.jpg'
-            if not os.path.exists(pngPath):
-                pngPath = self.cover_dir + f'{int(chartInfo.idNum)}.png'
+            pngPath = self.cover_dir + f'{get_cover_len4_id(chartInfo.idNum)}.png'
             if not os.path.exists(pngPath):
                 pngPath = self.cover_dir + '1000.png'
             temp = Image.open(pngPath).convert('RGB')
             temp = self._resizePic(temp, itemW / temp.size[0])
             temp = temp.crop((0, (temp.size[1] - itemH) / 2, itemW, (temp.size[1] + itemH) / 2))
             temp = temp.filter(ImageFilter.GaussianBlur(3))
-            temp = temp.point(lambda p: p * 0.72)
+            temp = temp.point(lambda p: int(p * 0.72))
 
             tempDraw = ImageDraw.Draw(temp)
             tempDraw.polygon(levelTriagle, Color[chartInfo.diff])
@@ -289,7 +287,7 @@ class DrawBest(object):
             tempDraw.text((8, 60), f'#{num + 1}', 'white', font)
 
             recBase = Image.new('RGBA', (itemW, itemH), 'black')
-            recBase = recBase.point(lambda p: p * 0.8)
+            recBase = recBase.point(lambda p: int(p * 0.8))
             img.paste(recBase, (self.COLOUMS_IMG[j + 8] + 5, self.ROWS_IMG[i + 1] + 5))
             img.paste(temp, (self.COLOUMS_IMG[j + 8] + 4, self.ROWS_IMG[i + 1] + 4))
         for num in range(len(dxBest), dxBest.size):
