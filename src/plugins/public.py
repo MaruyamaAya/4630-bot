@@ -91,11 +91,11 @@ async def _(bot: Bot, event: Event, state: T_State):
                    MessageSegment.text(url_)])
     await self_search.finish(res_)
 
-pig = on_command('谁是猪')
+pig = on_regex('是猪')
 @pig.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    await pig.finish(Message([MessageSegment.text("[CQ:at,qq=1525014054]彩彩觉得是这位呢！")]))
-        
+    # await pig.finish(Message([MessageSegment.text("[CQ:at,qq=1525014054]彩彩觉得是这位呢！")]))
+    await pig.finish(Message([MessageSegment.at(1525014054), MessageSegment.text("彩彩觉得是这位呢!")]))
 help = on_command('help')
 
 
@@ -104,7 +104,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     help_str = '''可用命令如下：
 [那个数字] 随机迫害wht
 彩彩自搜 慌不择路的自我检索者
-今日舞萌 查看今天的舞萌运势
+aya 今日舞萌 查看今天的舞萌运势
 XXXmaimaiXXX什么 随机一首歌
 随个[dx/标准][绿黄红紫白]<难度> 随机一首指定条件的乐曲
 查歌<乐曲标题的一部分> 查询符合条件的乐曲
