@@ -1,3 +1,4 @@
+from nonebot.adapters.cqhttp import Message, MessageSegment
 import random, time, traceback
 
 NOPUSH_RESPONSE = [
@@ -44,7 +45,12 @@ class NoPush:
                     traceback.print_exc()
                 del self.cache[key]
             else:
-                await self.matcher.send(random.choice(NOPUSH_RESPONSE))
+                await self.matcher.send(
+                    Message([
+                        MessageSegment.reply(event.message_id),
+                        MessageSegment.at(event.user_id),
+                        MessageSegment.text(random.choice(NOPUSH_RESPONSE)),
+                    ]))
                 return
 
         return inner
