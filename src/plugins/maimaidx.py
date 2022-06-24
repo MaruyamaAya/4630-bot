@@ -383,6 +383,7 @@ best_50_pic = on_command('aya b50')
 
 @best_50_pic.handle()
 async def _(bot: Bot, event: Event, state: T_State):
+    await best_50_pic.send("彩彩正在帮你查询喔")
     username = str(event.get_message()).strip()
     if username == "":
         payload = {'qq': str(event.get_user_id()),'b50':True}
