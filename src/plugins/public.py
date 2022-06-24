@@ -7,6 +7,7 @@ from nonebot.typing import T_State
 from nonebot.adapters.cqhttp import Message, Event, Bot, MessageSegment
 from nonebot.exception import IgnoredException
 from nonebot.message import event_preprocessor
+from src.libraries.food import food_list, shitang
 from src.libraries.image import *
 from src.libraries.bilibili_search import *
 from random import randint
@@ -34,6 +35,7 @@ def img_aya_text():
     print(b64_data)
     return Message([MessageSegment.image(b64_data)])
 
+
 @event_preprocessor
 async def preprocessor(bot, event, state):
     if hasattr(event, 'message_type') and event.message_type == "private" and event.sub_type != "friend":
@@ -52,6 +54,38 @@ async def _(bot: Bot, event: Event, state: T_State):
     response = requests.get(url_,).text
     response = response.replace('你', '彩彩')
     await dog.finish(response)
+
+find_shitang = on_command("吃啥食堂", aliases={'吃什么食堂', '吃哪个食堂', '随个食堂'}, priority=1)
+@find_shitang.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    len_ = len(shitang)
+    idx_ = random.randint(0, len_ - 1)
+    food_ = shitang[idx_]
+    await find_shitang.finish("彩彩建议你吃{}呢！".format(food_))
+
+# find_shitang2 = on_regex("吃什么食堂", priority=2)
+# @find_shitang2.handle()
+# async def _(bot: Bot, event: Event, state: T_State):
+#     len_ = len(shitang)
+#     idx_ = random.randint(0, len_ - 1)
+#     food_ = food_list[idx_]
+#     await find_shitang2.finish("彩彩建议你吃{}呢！".format(food_))
+
+find_food = on_regex("吃啥", priority=2)
+@find_food.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    len_ = len(food_list)
+    idx_ = random.randint(0, len_ - 1)
+    food_ = food_list[idx_]
+    await find_food.finish("彩彩建议你吃{}呢！".format(food_))
+
+find_food2 = on_regex("吃什么", priority=2)
+@find_food2.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    len_ = len(food_list)
+    idx_ = random.randint(0, len_ - 1)
+    food_ = food_list[idx_]
+    await find_food2.finish("彩彩建议你吃{}呢！".format(food_))
 
 self_search = on_command("彩彩自搜")
 @self_search.handle()
@@ -91,11 +125,23 @@ async def _(bot: Bot, event: Event, state: T_State):
                    MessageSegment.text(url_)])
     await self_search.finish(res_)
 
-pig = on_regex('是猪')
+nopig = on_regex('不是猪', priority=1)
+@nopig.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    # await pig.finish(Message([MessageSegment.text("[CQ:at,qq=1525014054]彩彩觉得是这位呢！")]))
+    await nopig.finish(Message([MessageSegment.at(1525014054), MessageSegment.text("彩彩觉得反正不是这位呢!")]))
+
+pig = on_regex('是猪', priority=2,)
 @pig.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     # await pig.finish(Message([MessageSegment.text("[CQ:at,qq=1525014054]彩彩觉得是这位呢！")]))
     await pig.finish(Message([MessageSegment.at(1525014054), MessageSegment.text("彩彩觉得是这位呢!")]))
+
+pig2 = on_regex('猪呢', priority=2,)
+@pig2.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    # await pig.finish(Message([MessageSegment.text("[CQ:at,qq=1525014054]彩彩觉得是这位呢！")]))
+    await pig2.finish(Message([MessageSegment.at(1525014054), MessageSegment.text("彩彩觉得是这位呢!")]))
 help = on_command('help')
 
 
