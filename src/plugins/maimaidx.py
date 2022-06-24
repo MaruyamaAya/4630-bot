@@ -10,6 +10,7 @@ from src.libraries.maimaidx_music import *
 from src.libraries.image import *
 from src.libraries.maimai_best_40 import generate
 from src.libraries.maimai_best_50 import generate50
+from src.libraries.nopush import NoPush
 import re
 import random
 
@@ -389,6 +390,7 @@ best_40_pic = on_command('aya b40')
 
 
 @best_40_pic.handle()
+@NoPush(best_40_pic)
 async def _(bot: Bot, event: Event, state: T_State):
     await best_40_pic.send("彩彩正在帮你查询喔")
     username = str(event.get_message()).strip()
@@ -415,7 +417,9 @@ best_50_pic = on_command('aya b50')
 
 
 @best_50_pic.handle()
+@NoPush(best_40_pic)
 async def _(bot: Bot, event: Event, state: T_State):
+    await best_50_pic.send("彩彩正在帮你查询喔")
     username = str(event.get_message()).strip()
     if username == "":
         payload = {'qq': str(event.get_user_id()),'b50':True}
