@@ -298,23 +298,23 @@ class DrawBest(object):
 
     def draw(self):
         splashLogo = Image.open(self.pic_dir + 'UI_CMN_TabTitle_MaimaiTitle_Ver214.png').convert('RGBA')
-        splashLogo = self._resizePic(splashLogo, 0.65)
-        self.img.paste(splashLogo, (10, 10), mask=splashLogo.split()[3])
+        splashLogo = self._resizePic(splashLogo, 0.7)
+        self.img.paste(splashLogo, (15, 10), mask=splashLogo.split()[3])
 
         ratingBaseImg = Image.open(self.pic_dir + self._findRaPic()).convert('RGBA')
         ratingBaseImg = self._drawRating(ratingBaseImg)
         ratingBaseImg = self._resizePic(ratingBaseImg, 0.85)
-        self.img.paste(ratingBaseImg, (240, 8), mask=ratingBaseImg.split()[3])
+        self.img.paste(ratingBaseImg, (230, 8), mask=ratingBaseImg.split()[3])
 
         namePlateImg = Image.open(self.pic_dir + 'UI_TST_PlateMask.png').convert('RGBA')
-        namePlateImg = namePlateImg.resize((285, 40))
+        namePlateImg = namePlateImg.resize((275, 40))
         namePlateDraw = ImageDraw.Draw(namePlateImg)
         font1 = ImageFont.truetype('src/static/msyh.ttc', 28, encoding='unic')
         namePlateDraw.text((12, 4), ' '.join(list(self.userName)), 'black', font1)
         nameDxImg = Image.open(self.pic_dir + 'UI_CMN_Name_DX.png').convert('RGBA')
         nameDxImg = self._resizePic(nameDxImg, 0.9)
-        namePlateImg.paste(nameDxImg, (230, 4), mask=nameDxImg.split()[3])
-        self.img.paste(namePlateImg, (240, 40), mask=namePlateImg.split()[3])
+        namePlateImg.paste(nameDxImg, (220, 4), mask=nameDxImg.split()[3])
+        self.img.paste(namePlateImg, (230, 40), mask=namePlateImg.split()[3])
 
         shougouImg = Image.open(self.pic_dir + 'UI_CMN_Shougou_Rainbow.png').convert('RGBA')
         shougouDraw = ImageDraw.Draw(shougouImg)
@@ -333,7 +333,7 @@ class DrawBest(object):
         shougouDraw.text((textPos[0] + 1, textPos[1] + 1), playCountInfo, 'black', font2)
         shougouDraw.text(textPos, playCountInfo, 'white', font2)
         shougouImg = self._resizePic(shougouImg, 1.05)
-        self.img.paste(shougouImg, (240, 83), mask=shougouImg.split()[3])
+        self.img.paste(shougouImg, (230, 83), mask=shougouImg.split()[3])
 
         self._drawBestList(self.img, self.sdBest, self.dxBest)
 

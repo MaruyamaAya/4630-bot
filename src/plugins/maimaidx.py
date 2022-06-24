@@ -347,12 +347,17 @@ BREAK 50落(一共{brk}个)等价于 {(break_50_reduce / 100):.3f} 个 TAP GREAT
         except Exception:
             await query_chart.send("格式错误，输入“分数线 帮助”以查看帮助信息")
 
+replace_score = on_command("b40", aliases={'mai b40'})
+replace_score.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    await replace_score.finish("如果想让彩彩帮你查询的话，请使用aya b40哦~")
 
 best_40_pic = on_command('aya b40')
 
 
 @best_40_pic.handle()
 async def _(bot: Bot, event: Event, state: T_State):
+    await best_40_pic.send("彩彩正在帮你查询喔")
     username = str(event.get_message()).strip()
     if username == "":
         payload = {'qq': str(event.get_user_id())}
