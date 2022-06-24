@@ -110,6 +110,7 @@ async def _(bot: Bot, event: Event, state: T_State):
         for i in range(bad_count):
             s += f'{maj_list[bad_value[i]]} '
     s += f"\n\n★ 犽之锦囊 | Kiba \'s Hints\n{majtips_list[tips_value]}"
+    s += 'credit to Killua-Blitz/Kiba'
     await jrmj.finish(Message([
         {"type": "text", "data": {"text": s}}
     ]))

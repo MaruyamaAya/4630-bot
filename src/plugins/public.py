@@ -148,9 +148,18 @@ help = on_command('help')
 @help.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     help_str = '''可用命令如下：
-[那个数字] 随机迫害wht
 彩彩自搜 慌不择路的自我检索者
 aya 今日舞萌 查看今天的舞萌运势
+（北京限定） 吃啥/吃什么
+（PKU限定）随个食堂/吃啥食堂/吃什么食堂
+（credit to kiba）今日雀魂
+（credit to kiba）mjxp
+（credit to kiba）[歌曲等级][完成度]进度
+（credit to kiba）牌子进度
+（credit to kiba）低情商[]高情商[]
+（credit to kiba）gocho [内容1] [内容2]
+（credit to kiba）金龙盘旋/金龙飞升
+[那个数字] 随机迫害wht
 XXXmaimaiXXX什么 随机一首歌
 随个[dx/标准][绿黄红紫白]<难度> 随机一首指定条件的乐曲
 查歌<乐曲标题的一部分> 查询符合条件的乐曲

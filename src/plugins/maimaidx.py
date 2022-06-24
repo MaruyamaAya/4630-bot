@@ -13,6 +13,39 @@ from src.libraries.maimai_best_50 import generate50
 import re
 import random
 
+from collections import defaultdict
+
+from nonebot import on_command, on_message, on_notice, require, get_driver, on_regex
+from nonebot.typing import T_State
+from nonebot.adapters import Event, Bot
+from nonebot.adapters.cqhttp import Message, MessageSegment, GroupMessageEvent, PrivateMessageEvent
+
+from src.libraries.tool import hash
+from src.libraries.maimaidx_music import *
+from src.libraries.image import *
+from src.libraries.maimai_best_40 import *
+
+from src.libraries.maimai_plate import *
+
+import re
+import datetime
+import time
+
+from nonebot.permission import Permission
+from nonebot.log import logger
+import requests
+import json
+import random
+from urllib import parse
+import asyncio
+from nonebot.rule import to_me
+
+driver = get_driver()
+
+@driver.on_startup
+def _():
+    logger.info("aya Kernel -> Load \"DX\" successfully")
+
 
 def song_txt(music: Music):
     return Message([
@@ -402,3 +435,264 @@ async def _(bot: Bot, event: Event, state: T_State):
                 }
             }
         ]))
+
+
+plate = on_regex(r'^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉熊華华爽舞霸])([極极将舞神者]舞?)进度\s?(.+)?')
+
+@plate.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = "([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉熊華华爽舞霸])([極极将舞神者]舞?)进度\s?(.+)?"
+    comboRank = 'fc fc+ ap ap+'.split(' ')
+    combo_rank = 'fc fcp ap app'.split(' ')
+    syncRank = 'fs fs+ fdx fdx+'.split(' ')
+    sync_rank = 'fs fsp fdx fdxp'.split(' ')
+    res = re.match(regex, str(event.get_message()).lower())
+    diffs = 'Basic Advanced Expert Master Re:Master'.split(' ')
+    nickname = event.sender.nickname
+    mt = event.message_type
+    db = get_driver().config.db
+    c = await db.cursor()
+    if f'{res.groups()[0]}{res.groups()[1]}' == '真将':
+        await plate.finish(f"▿ To {nickname} | Plate Error\n请您注意: 真系 (maimai & maimaiPLUS) 没有真将成就。")
+        return
+    if not res.groups()[2]:
+        if mt == "guild":
+            await c.execute(f'select * from gld_table where uid="{event.user_id}"')
+            data = await c.fetchone()
+            if data is None:
+                await plate.send(f"▿ To {nickname} | Plate - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                return
+            else:
+                payload = {'qq': str(data[0])}
+        else:
+            payload = {'qq': str(event.get_user_id())}
+    else:
+        payload = {'username': res.groups()[2].strip()}
+    if res.groups()[0] in ['舞', '霸']:
+        payload['version'] = list(set(version for version in plate_to_version.values()))
+    if res.groups()[0] in ['真']:
+        payload['version'] = [plate_to_version['真1'], plate_to_version['真2']]
+    else:
+        payload['version'] = [plate_to_version[res.groups()[0]]]
+    player_data, success = await get_player_plate(payload)
+    if success == 400:
+        await plate.send(f"▿ To {nickname} | Plate - 错误\n您输入的玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+    elif success == 403:
+        await plate.send(f'▿ To {nickname} | Plate - 被禁止\n 不允许使用此方式查询牌子进度。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后，不输入用户名再试一次。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
+    else:
+        song_played = []
+        song_remain_expert = []
+        song_remain_master = []
+        song_remain_re_master = []
+        song_remain_difficult = []
+        if res.groups()[1] in ['将', '者']:
+            for song in player_data['verlist']:
+                if song['level_index'] == 2 and song['achievements'] < (100.0 if res.groups()[1] == '将' else 80.0):
+                    song_remain_expert.append([song['id'], song['level_index']])
+                if song['level_index'] == 3 and song['achievements'] < (100.0 if res.groups()[1] == '将' else 80.0):
+                    song_remain_master.append([song['id'], song['level_index']])
+                if res.groups()[0] in ['舞', '霸'] and song['level_index'] == 4 and song['achievements'] < (100.0 if res.groups()[1] == '将' else 80.0):
+                    song_remain_re_master.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1] in ['極', '极']:
+            for song in player_data['verlist']:
+                if song['level_index'] == 2 and not song['fc']:
+                    song_remain_expert.append([song['id'], song['level_index']])
+                if song['level_index'] == 3 and not song['fc']:
+                    song_remain_master.append([song['id'], song['level_index']])
+                if res.groups()[0] == '舞' and song['level_index'] == 4 and not song['fc']:
+                    song_remain_re_master.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1] == '舞舞':
+            for song in player_data['verlist']:
+                if song['level_index'] == 2 and song['fs'] not in ['fsd', 'fsdp']:
+                    song_remain_expert.append([song['id'], song['level_index']])
+                if song['level_index'] == 3 and song['fs'] not in ['fsd', 'fsdp']:
+                    song_remain_master.append([song['id'], song['level_index']])
+                if res.groups()[0] == '舞' and song['level_index'] == 4 and song['fs'] not in ['fsd', 'fsdp']:
+                    song_remain_re_master.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1] == "神":
+            for song in player_data['verlist']:
+                if song['level_index'] == 2 and song['fc'] not in ['ap', 'app']:
+                    song_remain_expert.append([song['id'], song['level_index']])
+                if song['level_index'] == 3 and song['fc'] not in ['ap', 'app']:
+                    song_remain_master.append([song['id'], song['level_index']])
+                if res.groups()[0] == '舞' and song['level_index'] == 4 and song['fc'] not in ['ap', 'app']:
+                    song_remain_re_master.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        total_music_num = 0
+        for music in total_list:
+            if music.version in payload['version']:
+                total_music_num += 1
+                if [int(music.id), 2] not in song_played:
+                    song_remain_expert.append([int(music.id), 2])
+                if [int(music.id), 3] not in song_played:
+                    song_remain_master.append([int(music.id), 3])
+                if res.groups()[0] in ['舞', '霸'] and len(music.level) == 5 and [int(music.id), 4] not in song_played:
+                    song_remain_re_master.append([int(music.id), 4])
+        song_remain_expert = sorted(song_remain_expert, key=lambda i: int(i[0]))
+        song_remain_master = sorted(song_remain_master, key=lambda i: int(i[0]))
+        song_remain_re_master = sorted(song_remain_re_master, key=lambda i: int(i[0]))
+        for song in song_remain_expert + song_remain_master + song_remain_re_master:
+            music = total_list.by_id(str(song[0]))
+            if music.ds[song[1]] > 13.6:
+                song_remain_difficult.append([music.id, music.title, diffs[song[1]], music.ds[song[1]], music.stats[song[1]].difficulty, song[1]])
+        expcomplete = 100 - (len(song_remain_expert) / total_music_num * 100)
+        mascomplete = 100 - (len(song_remain_master) / total_music_num * 100)
+        msg = f'''▾ To {nickname} | {res.groups()[0]}{res.groups()[1]}当前进度\n{"您" if not res.groups()[2] else res.groups()[2]}的剩余歌曲数量如下：
+Expert | 已完成 {expcomplete:.2f}%, 待完成 {len(song_remain_expert)} 首 / 共 {total_music_num} 首
+Master | 已完成 {mascomplete:.2f}%, 待完成 {len(song_remain_master)} 首 / 共 {total_music_num} 首
+'''
+        song_remain = song_remain_expert + song_remain_master + song_remain_re_master
+        song_record = [[s['id'], s['level_index']] for s in player_data['verlist']]
+        if res.groups()[0] in ['舞', '霸']:
+            remascomplete = 100 - (len(song_remain_re_master) / total_music_num * 100)
+            msg += f'Re:Master | 已完成 {remascomplete:.2f}%, 待完成 {len(song_remain_re_master)} 首 / 共 {total_music_num} 首\n'
+        if len(song_remain_difficult) > 0:
+            if len(song_remain_difficult) < 11:
+                if res.groups()[0] in ['真']:
+                        msg += "\n注意: 真系不需要游玩ジングルベル(以下简称\"圣诞歌\")。受技术限制，真系查询仍包括圣诞歌，您可以忽略此歌曲。如您的真系进度只剩下圣诞歌，则您已达成条件。\n"
+                msg += '\n剩余的 13+ 及以上的谱面如下：\n'
+                for s in sorted(song_remain_difficult, key=lambda i: i[3]):
+                    self_record = ''
+                    if [int(s[0]), s[-1]] in song_record:
+                        record_index = song_record.index([int(s[0]), s[-1]])
+                        if res.groups()[1] in ['将', '者']:
+                            self_record = str(player_data['verlist'][record_index]['achievements']) + '%'
+                        elif res.groups()[1] in ['極', '极', '神']:
+                            if player_data['verlist'][record_index]['fc']:
+                                self_record = comboRank[combo_rank.index(player_data['verlist'][record_index]['fc'])].upper()
+                        elif res.groups()[1] == '舞舞':
+                            if player_data['verlist'][record_index]['fs']:
+                                self_record = syncRank[sync_rank.index(player_data['verlist'][record_index]['fs'])].upper()
+                    if res.groups()[0] in ['真'] and s[0] == 70:
+                        continue
+                    msg += f'Track {s[0]} > {s[1]} | {s[2]}\n定数: {s[3]} 相对难度: {s[4]} {"当前达成率: " if self_record else ""}{self_record}'.strip() + '\n\n'
+            else: msg += f'还有 {len(song_remain_difficult)} 个等级是 13+ 及以上的谱面，加油推分捏！\n'
+        elif len(song_remain) > 0:
+            if len(song_remain) < 11:
+                msg += '\n剩余曲目：\n'
+                for s in sorted(song_remain, key=lambda i: i[3]):
+                    m = total_list.by_id(str(s[0]))
+                    self_record = ''
+                    if [int(s[0]), s[-1]] in song_record:
+                        record_index = song_record.index([int(s[0]), s[-1]])
+                        if res.groups()[1] in ['将', '者']:
+                            self_record = str(player_data['verlist'][record_index]['achievements']) + '%'
+                        elif res.groups()[1] in ['極', '极', '神']:
+                            if player_data['verlist'][record_index]['fc']:
+                                self_record = comboRank[combo_rank.index(player_data['verlist'][record_index]['fc'])].upper()
+                        elif res.groups()[1] == '舞舞':
+                            if player_data['verlist'][record_index]['fs']:
+                                self_record = syncRank[sync_rank.index(player_data['verlist'][record_index]['fs'])].upper()
+                    if res.groups()[0] in ['真'] and s[0] == 70:
+                        continue
+                    msg += f'Track {m.id} > {m.title} | {diffs[s[1]]}\n定数: {m.ds[s[1]]} 相对难度: {m.stats[s[1]].difficulty} {"当前达成率: " if self_record else ""}{self_record}'.strip() + '\n\n'
+            else:
+                msg += '已经没有大于 13+ 的谱面了,加油清谱吧！\n'
+        else: msg += f'{res.groups()[0]}{res.groups()[1]} 所需的所有歌曲均已达到要求，恭喜 {"您" if not res.groups()[2] else res.groups()[2]} 达成了 {res.groups()[0]}{res.groups()[1]}！'
+        msg += '\n credit to Killua-Blitz/Kiba \n'
+        await plate.send(msg.strip())
+
+levelprogress = on_regex(r'^([0-9]+\+?)\s?(.+)进度\s?(.+)?')
+
+@levelprogress.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = "([0-9]+\+?)\s?(.+)进度\s?(.+)?"
+    res = re.match(regex, str(event.get_message()).lower())
+    scoreRank = 'd c b bb bbb a aa aaa s s+ ss ss+ sss sss+'.lower().split(' ')
+    levelList = '1 2 3 4 5 6 7 7+ 8 8+ 9 9+ 10 10+ 11 11+ 12 12+ 13 13+ 14 14+ 15'.split(' ')
+    comboRank = 'fc fc+ ap ap+'.split(' ')
+    combo_rank = 'fc fcp ap app'.split(' ')
+    syncRank = 'fs fs+ fdx fdx+'.split(' ')
+    sync_rank = 'fs fsp fdx fdxp'.split(' ')
+    achievementList = [50.0, 60.0, 70.0, 75.0, 80.0, 90.0, 94.0, 97.0, 98.0, 99.0, 99.5, 100.0, 100.5]
+    nickname = event.sender.nickname
+    db = get_driver().config.db
+    c = await db.cursor()
+    mt = event.message_type
+    if res.groups()[0] not in levelList:
+        await levelprogress.finish(f"▿ To {nickname} | 参数错误\n最低是1，最高是15，您这整了个{res.groups()[0]}......故意找茬的吧？")
+        return
+    if res.groups()[1] not in scoreRank + comboRank + syncRank:
+        await levelprogress.finish(f"▿ To {nickname} | 参数错误\n输入有误。\n1.请不要随便带空格。\n2.等级目前只有D/C/B/BB/BBB/A/AA/AAA/S/S+/SS/SS+/SSS/SSS+\n3.同步相关只有FS/FC/FDX/FDX+/FC/FC+/AP/AP+。")
+        return
+    if not res.groups()[2]:
+        if mt == "guild":
+            await c.execute(f'select * from gld_table where uid="{event.user_id}"')
+            data = await c.fetchone()
+            if data is None:
+                await levelprogress.send(f"▿ To {nickname} | 等级清谱查询 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                return
+            else:
+                payload = {'qq': str(data[0])}
+        else:
+            payload = {'qq': str(event.get_user_id())}
+    else:
+        payload = {'username': res.groups()[2].strip()}
+    payload['version'] = list(set(version for version in plate_to_version.values()))
+    player_data, success = await get_player_plate(payload)
+    if success == 400:
+        await levelprogress.send(f"▿ To {nickname} | 等级清谱查询 - 错误\n您输入的玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+        return
+    elif success == 403:
+        await levelprogress.send(f'▿ To {nickname} | 等级清谱查询 - 被禁止\n 不允许使用此方式查询牌子进度。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后，不输入用户名再试一次。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
+        return
+    else:
+        song_played = []
+        song_remain = []
+        if res.groups()[1].lower() in scoreRank:
+            achievement = achievementList[scoreRank.index(res.groups()[1].lower()) - 1]
+            for song in player_data['verlist']:
+                if song['level'] == res.groups()[0] and song['achievements'] < achievement:
+                    song_remain.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1].lower() in comboRank:
+            combo_index = comboRank.index(res.groups()[1].lower())
+            for song in player_data['verlist']:
+                if song['level'] == res.groups()[0] and ((song['fc'] and combo_rank.index(song['fc']) < combo_index) or not song['fc']):
+                    song_remain.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1].lower() in syncRank:
+            sync_index = syncRank.index(res.groups()[1].lower())
+            for song in player_data['verlist']:
+                if song['level'] == res.groups()[0] and ((song['fs'] and sync_rank.index(song['fs']) < sync_index) or not song['fs']):
+                    song_remain.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        for music in total_list:
+            for i, lv in enumerate(music.level[2:]):
+                if lv == res.groups()[0] and [int(music.id), i + 2] not in song_played:
+                    song_remain.append([int(music.id), i + 2])
+        song_remain = sorted(song_remain, key=lambda i: int(i[1]))
+        song_remain = sorted(song_remain, key=lambda i: int(i[0]))
+        songs = []
+        for song in song_remain:
+            music = total_list.by_id(str(song[0]))
+            songs.append([music.id, music.title, diffs[song[1]], music.ds[song[1]], music.stats[song[1]].difficulty, song[1]])
+        msg = ''
+        if len(song_remain) > 0:
+            if len(song_remain) < 50:
+                song_record = [[s['id'], s['level_index']] for s in player_data['verlist']]
+                msg += f'▼ To {nickname} | 清谱进度\n以下是 {"您" if not res.groups()[2] else res.groups()[2]} 的 Lv.{res.groups()[0]} 全谱面 {res.groups()[1].upper()} 的剩余曲目：\n'
+                for s in sorted(songs, key=lambda i: i[3]):
+                    self_record = ''
+                    if [int(s[0]), s[-1]] in song_record:
+                        record_index = song_record.index([int(s[0]), s[-1]])
+                        if res.groups()[1].lower() in scoreRank:
+                            self_record = str(player_data['verlist'][record_index]['achievements']) + '%'
+                        elif res.groups()[1].lower() in comboRank:
+                            if player_data['verlist'][record_index]['fc']:
+                                self_record = comboRank[combo_rank.index(player_data['verlist'][record_index]['fc'])].upper()
+                        elif res.groups()[1].lower() in syncRank:
+                            if player_data['verlist'][record_index]['fs']:
+                                self_record = syncRank[sync_rank.index(player_data['verlist'][record_index]['fs'])].upper()
+                    if self_record == "":
+                        self_record = "暂无"
+                    msg += f'Track {s[0]} > {s[1]} | {s[2]}\nBase: {s[3]} 相对难度: {s[4]} 当前达成率: {self_record}'.strip() + '\n\n'
+            else:
+                await levelprogress.finish(f'▾ To {nickname} | 清谱进度\n{"您" if not res.groups()[2] else res.groups()[2]} 还有 {len(song_remain)} 首 Lv.{res.groups()[0]} 的曲目还没有达成 {res.groups()[1].upper()},加油推分吧！\n credit to Killua-Blitz/Kiba \n')
+        else:
+            await levelprogress.finish(f'▾ To {nickname} | 清谱完成\n恭喜 {"您" if not res.groups()[2] else res.groups()[2]} 达成 Lv.{res.groups()[0]} 全谱面 {res.groups()[1].upper()}！\n credit to Killua-Blitz/Kiba \n')
+        msg += '\n credit to Killua-Blitz/Kiba \n'
+        await levelprogress.send(MessageSegment.image(f"base64://{image_to_base64(text_to_image(msg.strip())).decode()}"))
