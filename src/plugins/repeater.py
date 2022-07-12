@@ -76,7 +76,7 @@ def checkMsgEqual(msg1, msg2):
     return True
 
 
-repeater = on_message(priority=10, block=False)
+repeater = on_notice(priority=10, block=False)
 
 
 @repeater.handle()
